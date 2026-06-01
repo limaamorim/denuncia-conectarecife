@@ -5,7 +5,7 @@ Plataforma web para registro e gestão de denúncias urbanas na cidade do Recife
 ## Stack
 
 - [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- [TanStack Start](https://tanstack.com/start) / [TanStack Router](https://tanstack.com/router) (roteamento file-based)
+- [TanStack Router](https://tanstack.com/router) (SPA, file-based routing)
 - [Tailwind CSS 4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
 - [Leaflet](https://leafletjs.com/) + OpenStreetMap (mapa de localização)
 - [Recharts](https://recharts.org/) (gráficos do painel admin)
@@ -86,6 +86,23 @@ Na tela de login, use qualquer senha:
 - **Componentes compartilhados** entre perfis ficam em `src/components/shared/`.
 - **Tipos de domínio** ficam em `src/types/`.
 - Dados mock ficam em `src/data/` até integração com API real.
+
+## Deploy (Vercel / Netlify)
+
+O build gera um site estático em `dist/` (`index.html` + `assets/`).
+
+### Vercel
+
+- **Framework Preset:** Vite (ou Other)
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- O arquivo `vercel.json` na raiz já configura fallback SPA para rotas como `/login`, `/admin` e `/cidadao`.
+
+### Netlify
+
+- **Build command:** `npm run build`
+- **Publish directory:** `dist`
+- O arquivo `netlify.toml` na raiz já define build, publish e redirect `/* → /index.html`.
 
 ## Licença
 
