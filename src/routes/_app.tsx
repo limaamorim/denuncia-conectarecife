@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
-import { AppHeader } from "@/components/AppHeader";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -15,7 +15,12 @@ function AppLayout() {
     if (!loading && !user) navigate({ to: "/login", replace: true });
   }, [loading, user, navigate]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando…</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Carregando…
+      </div>
+    );
   if (!user) return null;
 
   return (

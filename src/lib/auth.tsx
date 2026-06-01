@@ -25,14 +25,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(KEY) : null;
       if (raw) setUser(JSON.parse(raw));
-    } catch {}
+    } catch {
+      // ignore
+    }
     setLoading(false);
   }, []);
+
 
   const login = async (email: string, password: string) => {
     if (!email || !password) throw new Error("Informe e-mail e senha");
     const role: Role = email.toLowerCase().includes("admin") ? "admin" : "cidadao";
-    const u: User = { email, role, nome: role === "admin" ? "Gestor Municipal" : "Cidadão Recifense" };
+    const u: User = {
+      email,
+      role,
+      nome: role === "admin" ? "Gestor Municipal" : "Cidadão Recifense",
+    };
     localStorage.setItem(KEY, JSON.stringify(u));
     setUser(u);
     return u;
