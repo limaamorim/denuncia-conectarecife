@@ -40,7 +40,7 @@ export const denuncias: Denuncia[] = Array.from({ length: 48 }).map((_, i) => {
   const status = statuses[Math.floor(seeded(i + 1) * statuses.length)];
   const daysAgo = Math.floor(seeded(i + 7) * 60);
   const date = new Date(Date.now() - daysAgo * 86400000);
-  const titulos = titulosPorCat[cat];
+  const titulos = titulosPorCat[cat] ?? ["Ocorrência urbana"];
 
   return {
     id: `c${i + 1}`,
