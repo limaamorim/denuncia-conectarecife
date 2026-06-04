@@ -16,7 +16,7 @@ import {
 } from "@/features/cidadao/components/DenunciaLocationMap";
 import { MediaUpload } from "@/features/cidadao/components/MediaUpload";
 import { Stepper, type StepKey, STEPS } from "@/features/cidadao/components/wizard/Stepper";
-import { CategoryStep, CATEGORIES } from "@/features/cidadao/components/wizard/CategoryStep";
+import { CategoryStep } from "@/features/cidadao/components/wizard/CategoryStep";
 import { TitleSuggestions } from "@/features/cidadao/components/wizard/TitleSuggestions";
 import { VoiceInput } from "@/features/cidadao/components/wizard/VoiceInput";
 import { AnalysisModal } from "@/features/cidadao/components/wizard/AnalysisModal";
