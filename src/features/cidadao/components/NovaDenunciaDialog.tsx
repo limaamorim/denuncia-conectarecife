@@ -22,7 +22,7 @@ import { VoiceInput } from "@/features/cidadao/components/wizard/VoiceInput";
 import { AnalysisModal } from "@/features/cidadao/components/wizard/AnalysisModal";
 import { ArrowLeft, ArrowRight, ImageIcon, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
-import { urgenciaColorClasses } from "@/lib/urgencia";
+
 
 export function NovaDenunciaDialog({
   onClose,
