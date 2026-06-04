@@ -1,4 +1,5 @@
 import type { Category, Denuncia, Status } from "@/types/denuncia";
+import { classificarUrgencia } from "@/lib/urgencia";
 
 const bairros = [
   "Boa Viagem",
@@ -56,6 +57,8 @@ export const denuncias: Denuncia[] = Array.from({ length: 48 }).map((_, i) => {
     lng: -34.9 + (seeded(i + 13) - 0.5) * 0.08,
     iaConfianca: 70 + Math.floor(seeded(i + 17) * 29),
     iaSugestao: cat,
+    iaUrgencia: classificarUrgencia(cat).urgencia,
+    iaUrgenciaMotivo: classificarUrgencia(cat).motivo,
     cidadao: i % 3 === 0 ? "cidadao@recife.gov" : `cidadao${i}@email.com`,
     timeline: [
       { label: "Recebido", date: date.toISOString(), done: true },
