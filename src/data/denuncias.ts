@@ -23,7 +23,7 @@ export const categorias: Category[] = [
 
 const statuses: Status[] = ["Pendente", "Em Triagem", "Em Andamento", "Resolvido"];
 
-const titulosPorCat: Record<Category, string[]> = {
+const titulosPorCat: Partial<Record<Category, string[]>> = {
   Iluminação: ["Poste sem luz há 3 dias", "Lâmpada queimada na praça", "Iluminação intermitente"],
   Vias: ["Buraco grande na via", "Calçada destruída", "Sinalização apagada"],
   Saneamento: ["Vazamento de esgoto", "Bueiro entupido", "Água parada"],
