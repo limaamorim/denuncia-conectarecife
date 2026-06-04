@@ -322,5 +322,3 @@ function ReviewRow({
   );
 }
 
-// Re-export para evitar tree-shake de constantes usadas
-export { CATEGORIES, urgenciaColorClasses };
