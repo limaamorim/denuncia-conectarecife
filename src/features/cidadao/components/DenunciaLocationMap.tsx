@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L, { type LeafletMouseEvent, type Map, type Marker } from "leaflet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Crosshair, LocateFixed } from "lucide-react";
+import { toast } from "sonner";
 
 export type LocalizacaoCompleta = {
   enderecoCompleto: string;
@@ -19,7 +21,7 @@ type Props = {
   onLocationPicked?: (loc: LocalizacaoCompleta) => void;
 };
 
-const RECIFE = { lat: -8.0476, lng: -34.877 }; // centro aproximado
+const RECIFE = { lat: -8.0476, lng: -34.877 };
 
 function safeNominatimQuery(q: string) {
   return q.trim().replace(/\s+/g, " ").replace(/[“”]/g, '"').slice(0, 200);
@@ -40,6 +42,8 @@ type NominatimReverse = {
     state?: string;
     region?: string;
     postcode?: string;
+    road?: string;
+    pedestrian?: string;
   };
 };
 
@@ -69,6 +73,37 @@ function normalizeParts(place: NominatimReverse | null | undefined) {
   };
 }
 
+async function reverseGeocode(lat: number, lng: number): Promise<LocalizacaoCompleta> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+      String(lat),
+    )}&lon=${encodeURIComponent(String(lng))}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error("reverse fail");
+    const json = await res.json();
+    const parts = normalizeParts(json);
+    return {
+      enderecoCompleto:
+        parts.enderecoCompleto || `Latitude ${lat.toFixed(5)}, Longitude ${lng.toFixed(5)}`,
+      bairro: parts.bairro || "(não informado)",
+      cidade: parts.cidade || "(não informado)",
+      estado: parts.estado || "(não informado)",
+      cep: parts.cep,
+      lat,
+      lng,
+    };
+  } catch {
+    return {
+      enderecoCompleto: `Latitude ${lat.toFixed(5)}, Longitude ${lng.toFixed(5)}`,
+      bairro: "(não informado)",
+      cidade: "(não informado)",
+      estado: "(não informado)",
+      lat,
+      lng,
+    };
+  }
+}
+
 export function DenunciaLocationMap({
   height = 380,
   initialCenter = RECIFE,
@@ -80,6 +115,8 @@ export function DenunciaLocationMap({
 
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [locating, setLocating] = useState(false);
+
   type NominatimSuggestion = {
     place_id?: number | string;
     osm_id?: number | string;
@@ -92,21 +129,36 @@ export function DenunciaLocationMap({
 
   const initialZoom = 13;
 
+  const placeMarker = async (lat: number, lng: number, animate = true) => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (animate) map.setView([lat, lng], Math.max(map.getZoom(), 16), { animate: true });
+
+    const loc = await reverseGeocode(lat, lng);
+
+    if (markerRef.current) {
+      markerRef.current.setLatLng([lat, lng]);
+    } else {
+      markerRef.current = L.marker([lat, lng], { title: "Ocorrência selecionada" }).addTo(map);
+    }
+    markerRef.current
+      .bindPopup(`<strong>Local selecionado</strong><br/>${loc.enderecoCompleto}`)
+      .openPopup();
+
+    onLocationPicked?.(loc);
+  };
+
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      // Leaflet imports CSS; safe to do here (browser only)
       await import("leaflet/dist/leaflet.css");
-      if (!mounted) return;
+      if (!mounted || !mapElRef.current) return;
 
-      if (!mapElRef.current) return;
-
-      const map = L.map(mapElRef.current, {
-        zoomControl: true,
-        preferCanvas: true,
-      }).setView([initialCenter.lat, initialCenter.lng], initialZoom);
-
+      const map = L.map(mapElRef.current, { zoomControl: true, preferCanvas: true }).setView(
+        [initialCenter.lat, initialCenter.lng],
+        initialZoom,
+      );
       mapRef.current = map;
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -116,59 +168,9 @@ export function DenunciaLocationMap({
       }).addTo(map);
 
       const onClick = async (e: LeafletMouseEvent) => {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        } else {
-          markerRef.current = L.marker([lat, lng], {
-            title: "Ocorrência selecionada",
-          }).addTo(map);
-        }
-
-        // reverse geocode
+        setIsSearching(true);
         try {
-          setIsSearching(true);
-          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
-            String(lat),
-          )}&lon=${encodeURIComponent(String(lng))}&zoom=18&addressdetails=1`;
-
-          const res = await fetch(url, {
-            headers: {
-              // algumas instâncias pedem user-agent; aqui não dá para garantir, mas ajuda.
-              Accept: "application/json",
-            },
-          });
-
-          if (!res.ok) throw new Error(`Nominatim reverse failed: ${res.status}`);
-
-          const json = await res.json();
-          const parts = normalizeParts(json);
-
-          const loc: LocalizacaoCompleta = {
-            enderecoCompleto:
-              parts.enderecoCompleto || `Latitude ${lat.toFixed(5)}, Longitude ${lng.toFixed(5)}`,
-            bairro: parts.bairro || "(não informado)",
-            cidade: parts.cidade || "(não informado)",
-            estado: parts.estado || "(não informado)",
-            cep: parts.cep,
-            lat,
-            lng,
-          };
-
-          onLocationPicked?.(loc);
-        } catch {
-          // Fallback: preencher só lat/lng
-          const loc: LocalizacaoCompleta = {
-            enderecoCompleto: `Latitude ${lat.toFixed(5)}, Longitude ${lng.toFixed(5)}`,
-            bairro: "(não informado)",
-            cidade: "(não informado)",
-            estado: "(não informado)",
-            lat,
-            lng,
-          };
-          onLocationPicked?.(loc);
+          await placeMarker(e.latlng.lat, e.latlng.lng, false);
         } finally {
           setIsSearching(false);
         }
@@ -182,7 +184,8 @@ export function DenunciaLocationMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [initialCenter.lat, initialCenter.lng]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const searchSuggestions = useMemo(() => {
     if (!suggestions?.length) return [];
@@ -197,99 +200,80 @@ export function DenunciaLocationMap({
   const searchNow = async (q: string) => {
     const queryClean = safeNominatimQuery(q);
     if (!queryClean) return;
-
     const map = mapRef.current;
     if (!map) return;
 
     try {
       setIsSearching(true);
       setSuggestions([]);
-
-      // limit local Recife a ~raio usando viewbox é mais complexo; por performance/escopo, usamos q.
-      // Para melhorar precisão, prefixamos por "Recife" quando o usuário não enviar CEP.
       const finalQ = queryClean.match(/\b\d{5}-?\d{3}\b/) ? queryClean : `${queryClean} Recife`;
-
       const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8&q=${encodeURIComponent(
         finalQ,
       )}`;
-
       const res = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!res.ok) throw new Error(`Nominatim search failed: ${res.status}`);
-
-      const json = (await res.json()) as unknown;
+      if (!res.ok) throw new Error("search fail");
+      const json = (await res.json()) as NominatimSuggestion[];
       if (!Array.isArray(json) || json.length === 0) {
-        toastSafe("Nada encontrado. Tente outro termo.");
+        toast.error("Nada encontrado. Tente outro termo.");
         return;
       }
-
-      setSuggestions(json as Array<{
-        place_id?: number | string;
-        osm_id?: number | string;
-        display_name: string;
-        lat: string;
-        lon: string;
-      }>);
-
-      const pick = (json as Array<{
-        place_id?: number | string;
-        osm_id?: number | string;
-        display_name: string;
-        lat: string;
-        lon: string;
-      }>)[0];
-      const lat = Number(pick.lat);
-      const lng = Number(pick.lon);
-
-      map.setView([lat, lng], 16, { animate: true });
-
-      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
-      else markerRef.current = L.marker([lat, lng]).addTo(map);
-
-      // Optionally reverse for full fields
-      try {
-        const urlR = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
-          String(lat),
-        )}&lon=${encodeURIComponent(String(lng))}&zoom=18&addressdetails=1`;
-        const rr = await fetch(urlR, { headers: { Accept: "application/json" } });
-        if (rr.ok) {
-          const jr = await rr.json();
-          const parts = normalizeParts(jr);
-          const loc: LocalizacaoCompleta = {
-            enderecoCompleto: parts.enderecoCompleto || pick.display_name || "(não informado)",
-            bairro: parts.bairro || "(não informado)",
-            cidade: parts.cidade || "(não informado)",
-            estado: parts.estado || "(não informado)",
-            cep: parts.cep,
-            lat,
-            lng,
-          };
-          onLocationPicked?.(loc);
-        }
-      } catch {
-        // ignore
-      }
+      setSuggestions(json);
+      const pick = json[0];
+      await placeMarker(Number(pick.lat), Number(pick.lon));
     } catch {
-      toastSafe("Falha ao buscar localização. Verifique sua conexão e tente novamente.");
+      toast.error("Falha ao buscar localização.");
     } finally {
       setIsSearching(false);
     }
   };
 
-  const toastSafe = (msg: string) => {
-    // Evita depender de toast() aqui; mantém neutro.
-    // Se quiser, pode ser conectado em outro lugar.
-    console.warn(msg);
+  const useMyLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("Geolocalização não suportada neste navegador.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await placeMarker(pos.coords.latitude, pos.coords.longitude);
+          toast.success("Localização capturada.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? "Permissão de localização negada."
+            : "Não foi possível obter sua localização.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const centralizar = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const m = markerRef.current;
+    if (m) {
+      map.setView(m.getLatLng(), 16, { animate: true });
+    } else {
+      map.setView([RECIFE.lat, RECIFE.lng], initialZoom, { animate: true });
+    }
   };
 
   return (
     <div className="space-y-2 rounded-xl border overflow-hidden">
-      <div className="flex gap-2 p-3 pb-0">
+      <div className="flex flex-wrap gap-2 p-3 pb-0">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && searchNow(query)}
           placeholder="Buscar endereço, CEP ou referência..."
-          className="h-9"
+          className="h-9 flex-1 min-w-[180px]"
         />
         <Button
           type="button"
@@ -300,6 +284,28 @@ export function DenunciaLocationMap({
           disabled={isSearching || !query.trim()}
         >
           {isSearching ? "Buscando..." : "Buscar"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={useMyLocation}
+          disabled={locating}
+          title="Usar minha localização atual"
+        >
+          <LocateFixed className="h-4 w-4" />
+          <span className="hidden sm:inline">{locating ? "Localizando..." : "Minha localização"}</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={centralizar}
+          title="Centralizar mapa"
+        >
+          <Crosshair className="h-4 w-4" />
         </Button>
       </div>
 
@@ -320,14 +326,10 @@ export function DenunciaLocationMap({
         </div>
       )}
 
-      <div
-        ref={mapElRef}
-        style={{ height }}
-        className="border-t"
-      />
+      <div ref={mapElRef} style={{ height }} className="border-t" />
 
       <p className="px-3 pb-3 text-xs text-muted-foreground">
-        Clique no mapa para marcar o ponto da ocorrência.
+        Clique no mapa, use sua localização atual ou busque por endereço.
       </p>
     </div>
   );
