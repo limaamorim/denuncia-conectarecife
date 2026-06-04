@@ -6,16 +6,20 @@ declare module "leaflet" {
   export interface Map {
     remove(): void;
     setView(
-      center: [number, number],
+      center: [number, number] | { lat: number; lng: number },
       zoom: number,
       options?: { animate?: boolean },
     ): this;
+    getZoom(): number;
     on(type: "click", handler: (e: LeafletMouseEvent) => void): this;
   }
 
   export interface Marker {
     setLatLng(latlng: [number, number]): this;
+    getLatLng(): { lat: number; lng: number };
     addTo(map: Map): this;
+    bindPopup(html: string): this;
+    openPopup(): this;
   }
 
   export interface TileLayer {

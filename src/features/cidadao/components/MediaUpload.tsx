@@ -105,7 +105,10 @@ export function MediaUpload({ value, onChange }: Props) {
                   <X className="h-4 w-4 text-destructive" />
                 </button>
               </div>
-              <div className="mt-2 text-[11px] text-muted-foreground truncate">{it.file.name}</div>
+              <div className="mt-2 text-[11px] text-foreground truncate font-medium">{it.file.name}</div>
+              <div className="text-[10px] text-muted-foreground">
+                {(it.file.size / 1024).toFixed(1)} KB
+              </div>
             </div>
           ))}
         </div>

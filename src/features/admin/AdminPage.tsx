@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { denuncias as allDenuncias } from "@/data/denuncias";
 import { kpis, porCategoria, recebidasVsResolvidas } from "@/features/admin/data/stats";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import { AdminKPI } from "@/features/admin/components/AdminKPI";
 import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
 import { FilaTriagem } from "@/features/admin/components/FilaTriagem";
 import { MockMap } from "@/features/admin/components/MockMap";
+import { DateRangeFilter } from "@/features/admin/components/DateRangeFilter";
+import type { DateRange } from "react-day-picker";
 import {
   PieChart,
   Pie,
@@ -30,12 +33,12 @@ import {
 } from "recharts";
 import {
   FileBarChart,
-  Calendar,
   MapPin,
   TrendingUp,
   Clock,
   AlertCircle,
   Settings,
+  Filter,
 } from "lucide-react";
 
 const COLORS = [
@@ -44,12 +47,69 @@ const COLORS = [
   "oklch(0.68 0.16 152)",
   "oklch(0.82 0.16 85)",
   "oklch(0.6 0.18 30)",
+  "oklch(0.55 0.18 320)",
+  "oklch(0.6 0.15 200)",
+];
+
+const URGENCIAS = ["all", "Alta", "Média", "Baixa"] as const;
+const BAIRROS = [
+  "Boa Viagem",
+  "Casa Forte",
+  "Espinheiro",
+  "Pina",
+  "Várzea",
+  "Madalena",
+  "Afogados",
+  "Encruzilhada",
+  "Torre",
+  "Cordeiro",
 ];
 
 export function AdminPage() {
   const { user } = useAuth();
   const [view, setView] = useState<"overview" | "triagem" | "config">("overview");
-  const k = kpis();
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [urgencia, setUrgencia] = useState<string>("all");
+  const [categoria, setCategoria] = useState<string>("all");
+  const [bairro, setBairro] = useState<string>("all");
+
+  const categoriasUnicas = useMemo(
+    () => Array.from(new Set(allDenuncias.map((d) => d.categoria))).sort(),
+    [],
+  );
+
+  const filtered = useMemo(() => {
+    return allDenuncias.filter((d) => {
+      if (urgencia !== "all" && d.iaUrgencia !== urgencia) return false;
+      if (categoria !== "all" && d.categoria !== categoria) return false;
+      if (bairro !== "all" && d.bairro !== bairro) return false;
+      if (dateRange?.from) {
+        const dt = new Date(d.data).getTime();
+        const from = new Date(dateRange.from);
+        from.setHours(0, 0, 0, 0);
+        if (dt < from.getTime()) return false;
+        if (dateRange.to) {
+          const to = new Date(dateRange.to);
+          to.setHours(23, 59, 59, 999);
+          if (dt > to.getTime()) return false;
+        }
+      }
+      return true;
+    });
+  }, [dateRange, urgencia, categoria, bairro]);
+
+  const k = kpis(filtered);
+
+  const resetFilters = () => {
+    setDateRange(undefined);
+    setUrgencia("all");
+    setCategoria("all");
+    setBairro("all");
+  };
+
+  const hasFilters =
+    !!dateRange || urgencia !== "all" || categoria !== "all" || bairro !== "all";
 
   if (user?.role !== "admin") {
     return (
@@ -82,27 +142,70 @@ export function AdminPage() {
                   : "Configurações"}
             </h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">
-              <Calendar className="h-4 w-4" /> Últimos 30 dias
-            </Button>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-9 w-44">
-                <SelectValue placeholder="Bairro" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os bairros</SelectItem>
-                {["Boa Viagem", "Casa Forte", "Pina", "Madalena", "Afogados", "Encruzilhada"].map(
-                  (b) => (
+        </div>
+
+        {view === "overview" && (
+          <Card className="p-3 sm:p-4 border-0 shadow-soft">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mr-1">
+                <Filter className="h-3.5 w-3.5" /> Filtros
+              </div>
+
+              <DateRangeFilter value={dateRange} onChange={setDateRange} />
+
+              <Select value={urgencia} onValueChange={setUrgencia}>
+                <SelectTrigger className="h-9 w-36">
+                  <SelectValue placeholder="Urgência" />
+                </SelectTrigger>
+                <SelectContent>
+                  {URGENCIAS.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u === "all" ? "Todas urgências" : u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={categoria} onValueChange={setCategoria}>
+                <SelectTrigger className="h-9 w-44">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas categorias</SelectItem>
+                  {categoriasUnicas.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={bairro} onValueChange={setBairro}>
+                <SelectTrigger className="h-9 w-44">
+                  <SelectValue placeholder="Bairro" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os bairros</SelectItem>
+                  {BAIRROS.map((b) => (
                     <SelectItem key={b} value={b}>
                       {b}
                     </SelectItem>
-                  ),
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs">
+                  Limpar
+                </Button>
+              )}
+
+              <div className="ml-auto text-xs text-muted-foreground">
+                {filtered.length} de {allDenuncias.length} denúncias
+              </div>
+            </div>
+          </Card>
+        )}
 
         {view === "overview" && (
           <>
@@ -145,14 +248,14 @@ export function AdminPage() {
                   <ResponsiveContainer>
                     <PieChart>
                       <Pie
-                        data={porCategoria()}
+                        data={porCategoria(filtered)}
                         dataKey="value"
                         nameKey="name"
                         innerRadius={50}
                         outerRadius={85}
                         paddingAngle={2}
                       >
-                        {porCategoria().map((_, i) => (
+                        {porCategoria(filtered).map((_, i) => (
                           <Cell key={i} fill={COLORS[i % COLORS.length]} />
                         ))}
                       </Pie>
@@ -167,7 +270,7 @@ export function AdminPage() {
                 <p className="text-xs text-muted-foreground mb-3">Volume mensal</p>
                 <div className="h-64">
                   <ResponsiveContainer>
-                    <AreaChart data={recebidasVsResolvidas()}>
+                    <AreaChart data={recebidasVsResolvidas(filtered)}>
                       <defs>
                         <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="oklch(0.42 0.14 255)" stopOpacity={0.35} />
@@ -213,7 +316,7 @@ export function AdminPage() {
                   </p>
                 </div>
               </div>
-              <MockMap height={420} />
+              <MockMap height={420} items={filtered} />
             </Card>
           </>
         )}

@@ -5,9 +5,11 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, ShieldAlert } from "lucide-react";
+import { urgenciaColorClasses } from "@/lib/urgencia";
 
 export function DetalhesDenuncia({ d }: { d: Denuncia }) {
+  const u = urgenciaColorClasses(d.iaUrgencia);
   return (
     <>
       <SheetHeader>
@@ -20,7 +22,29 @@ export function DetalhesDenuncia({ d }: { d: Denuncia }) {
         </div>
         <SheetDescription>{d.descricao}</SheetDescription>
       </SheetHeader>
-      <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+
+      {d.iaUrgencia && (
+        <div className={`mt-4 rounded-lg border ${u.border} ${u.bg} p-3`}>
+          <div className="flex items-center gap-2">
+            <ShieldAlert className={`h-4 w-4 ${u.text}`} />
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              Classificação de urgência
+            </div>
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${u.dot}`} />
+            <span className="font-semibold text-foreground">{u.label}</span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {d.iaConfianca}% confiança
+            </span>
+          </div>
+          {d.iaUrgenciaMotivo && (
+            <p className="mt-2 text-xs text-foreground/80">{d.iaUrgenciaMotivo}</p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-lg border bg-muted/30 p-3">
           <div className="text-xs text-muted-foreground">Categoria</div>
           <div className="font-medium">{d.categoria}</div>
@@ -29,6 +53,12 @@ export function DetalhesDenuncia({ d }: { d: Denuncia }) {
           <div className="text-xs text-muted-foreground">Bairro</div>
           <div className="font-medium">{d.bairro}</div>
         </div>
+        {d.endereco && (
+          <div className="rounded-lg border bg-muted/30 p-3 col-span-2">
+            <div className="text-xs text-muted-foreground">Endereço</div>
+            <div className="font-medium text-sm">{d.endereco}</div>
+          </div>
+        )}
         <div className="rounded-lg border bg-muted/30 p-3 col-span-2">
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> Sugestão da IA

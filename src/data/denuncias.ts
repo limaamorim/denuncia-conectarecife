@@ -1,4 +1,5 @@
 import type { Category, Denuncia, Status } from "@/types/denuncia";
+import { classificarUrgencia } from "@/lib/urgencia";
 
 const bairros = [
   "Boa Viagem",
@@ -23,7 +24,7 @@ export const categorias: Category[] = [
 
 const statuses: Status[] = ["Pendente", "Em Triagem", "Em Andamento", "Resolvido"];
 
-const titulosPorCat: Record<Category, string[]> = {
+const titulosPorCat: Partial<Record<Category, string[]>> = {
   Iluminação: ["Poste sem luz há 3 dias", "Lâmpada queimada na praça", "Iluminação intermitente"],
   Vias: ["Buraco grande na via", "Calçada destruída", "Sinalização apagada"],
   Saneamento: ["Vazamento de esgoto", "Bueiro entupido", "Água parada"],
@@ -40,7 +41,7 @@ export const denuncias: Denuncia[] = Array.from({ length: 48 }).map((_, i) => {
   const status = statuses[Math.floor(seeded(i + 1) * statuses.length)];
   const daysAgo = Math.floor(seeded(i + 7) * 60);
   const date = new Date(Date.now() - daysAgo * 86400000);
-  const titulos = titulosPorCat[cat];
+  const titulos = titulosPorCat[cat] ?? ["Ocorrência urbana"];
 
   return {
     id: `c${i + 1}`,
@@ -56,6 +57,8 @@ export const denuncias: Denuncia[] = Array.from({ length: 48 }).map((_, i) => {
     lng: -34.9 + (seeded(i + 13) - 0.5) * 0.08,
     iaConfianca: 70 + Math.floor(seeded(i + 17) * 29),
     iaSugestao: cat,
+    iaUrgencia: classificarUrgencia(cat).urgencia,
+    iaUrgenciaMotivo: classificarUrgencia(cat).motivo,
     cidadao: i % 3 === 0 ? "cidadao@recife.gov" : `cidadao${i}@email.com`,
     timeline: [
       { label: "Recebido", date: date.toISOString(), done: true },
