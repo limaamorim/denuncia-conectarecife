@@ -2,8 +2,6 @@
 
 **Prototipo funcional para registro, acompanhamento e triagem inteligente de ocorrências urbanas**
 
-![Banner do projeto](logo.jpeg)
-
 ---
 
 ## 1. Capa
@@ -12,7 +10,6 @@
 
 **Plataforma digital para centralização e gestão de denúncias urbanas com suporte à tomada de decisão**
 
-![Imagem/banner (placeholder)](logo.jpeg)
 
 ---
 
