@@ -75,7 +75,7 @@ function escapeHtml(s: string) {
 
 export function AdminRealMap({ items, height = 460, onSelect }: Props) {
   const elRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<LMap | null>(null);
   const clusterRef = useRef<unknown>(null);
   const heatRef = useRef<unknown>(null);
   const readyRef = useRef(false);
@@ -139,15 +139,15 @@ export function AdminRealMap({ items, height = 460, onSelect }: Props) {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     const Lany = L as unknown as {
-      markerClusterGroup: (o?: Record<string, unknown>) => L.LayerGroup;
+      markerClusterGroup: (o?: Record<string, unknown>) => LayerGroup;
       heatLayer: (
         pts: Array<[number, number, number?]>,
         opts?: Record<string, unknown>,
-      ) => { addTo: (m: L.Map) => unknown };
+      ) => { addTo: (m: LMap) => unknown };
       marker: (
         latlng: [number, number],
         opts?: Record<string, unknown>,
-      ) => L.Marker;
+      ) => LMarker;
     };
 
     // Clear previous layers
