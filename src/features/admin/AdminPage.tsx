@@ -77,6 +77,7 @@ export function AdminPage() {
   const [urgencia, setUrgencia] = useState<string>("all");
   const [categoria, setCategoria] = useState<string>("all");
   const [bairro, setBairro] = useState<string>("all");
+  const [selected, setSelected] = useState<Denuncia | null>(null);
 
   const categoriasUnicas = useMemo(
     () => Array.from(new Set(allDenuncias.map((d) => d.categoria))).sort(),
