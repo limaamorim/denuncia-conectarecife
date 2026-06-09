@@ -26,10 +26,13 @@ declare module "leaflet" {
     addTo(map: Map): this;
   }
 
+  export interface DivIcon {}
+
   interface LeafletStatic {
     map(element: HTMLElement, options?: Record<string, unknown>): Map;
     marker(latlng: [number, number], options?: Record<string, unknown>): Marker;
     tileLayer(url: string, options?: Record<string, unknown>): TileLayer;
+    divIcon(options: Record<string, unknown>): DivIcon;
   }
 
   const L: LeafletStatic;
