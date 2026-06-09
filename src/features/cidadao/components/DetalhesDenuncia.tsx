@@ -1,15 +1,20 @@
+import { useState } from "react";
 import type { Denuncia } from "@/types/denuncia";
 import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { CheckCircle2, Circle, Sparkles, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, ShieldAlert, MapPin, ImageIcon } from "lucide-react";
 import { urgenciaColorClasses } from "@/lib/urgencia";
+import { DenunciaDetailMap } from "@/features/cidadao/components/DenunciaDetailMap";
 
 export function DetalhesDenuncia({ d }: { d: Denuncia }) {
   const u = urgenciaColorClasses(d.iaUrgencia);
+  const [zoom, setZoom] = useState<string | null>(null);
+  const midias = d.midias ?? [];
   return (
     <>
       <SheetHeader>
