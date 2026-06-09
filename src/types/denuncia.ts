@@ -42,5 +42,6 @@ export interface Denuncia {
   estado?: string;
   cep?: string;
   cidadao: string;
+  midias?: { url: string; nome?: string; tipo?: "imagem" | "video" }[];
   timeline: { label: string; date: string; done: boolean }[];
 }
