@@ -75,6 +75,58 @@ export function DetalhesDenuncia({ d }: { d: Denuncia }) {
       </div>
 
       <div className="mt-6">
+        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+          <MapPin className="h-4 w-4 text-primary" /> Localização
+        </h4>
+        <DenunciaDetailMap lat={d.lat} lng={d.lng} titulo={d.titulo} height={200} />
+        <div className="mt-1 text-xs text-muted-foreground">
+          {d.bairro} • {d.lat.toFixed(5)}, {d.lng.toFixed(5)}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+          <ImageIcon className="h-4 w-4 text-primary" /> Fotos e evidências
+          <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+            {midias.length}
+          </span>
+        </h4>
+        {midias.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            Nenhuma evidência anexada a esta denúncia.
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {midias.map((m, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setZoom(m.url)}
+                className="group relative aspect-square overflow-hidden rounded-lg border bg-muted hover:ring-2 hover:ring-accent transition"
+                title={m.nome ?? "Evidência"}
+              >
+                <img
+                  src={m.url}
+                  alt={m.nome ?? `Evidência ${i + 1}`}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
+        <DialogContent className="max-w-3xl p-2 bg-background">
+          {zoom && (
+            <img src={zoom} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
+          )}
+        </DialogContent>
+      </Dialog>
+
+
+      <div className="mt-6">
         <h4 className="text-sm font-semibold text-foreground mb-3">Linha do tempo</h4>
         <ol className="relative space-y-4 border-l-2 border-border pl-5">
           {d.timeline.map((t, i) => (
