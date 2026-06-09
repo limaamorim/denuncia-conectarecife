@@ -15,8 +15,11 @@ import {
 import { AdminKPI } from "@/features/admin/components/AdminKPI";
 import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
 import { FilaTriagem } from "@/features/admin/components/FilaTriagem";
-import { MockMap } from "@/features/admin/components/MockMap";
+import { AdminRealMap } from "@/features/admin/components/AdminRealMap";
+import { AdminDenunciaDetail } from "@/features/admin/components/AdminDenunciaDetail";
 import { DateRangeFilter } from "@/features/admin/components/DateRangeFilter";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import type { Denuncia } from "@/types/denuncia";
 import type { DateRange } from "react-day-picker";
 import {
   PieChart,
@@ -39,6 +42,7 @@ import {
   AlertCircle,
   Settings,
   Filter,
+  CheckCircle2,
 } from "lucide-react";
 
 const COLORS = [
