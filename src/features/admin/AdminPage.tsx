@@ -214,36 +214,44 @@ export function AdminPage() {
 
         {view === "overview" && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <AdminKPI
                 title="Total de Casos"
                 value={k.total}
-                delta="+12% vs. mês anterior"
+                delta={`${filtered.length} no filtro atual`}
                 icon={<FileBarChart className="h-5 w-5" />}
                 tone="primary"
               />
               <AdminKPI
-                title="Denúncias Pendentes"
+                title="Pendentes"
                 value={k.pendentes}
                 delta="Necessitam triagem"
                 icon={<AlertCircle className="h-5 w-5" />}
                 tone="warning"
               />
               <AdminKPI
-                title="Casos em Andamento"
+                title="Em Andamento"
                 value={k.andamento}
                 delta="Sendo atendidos"
                 icon={<Clock className="h-5 w-5" />}
                 tone="accent"
               />
               <AdminKPI
-                title="Tempo Médio de Resolução"
+                title="Resolvidos"
+                value={k.resolvidas}
+                delta="Concluídos no período"
+                icon={<CheckCircle2 className="h-5 w-5" />}
+                tone="success"
+              />
+              <AdminKPI
+                title="Tempo Médio"
                 value={`${k.tempoMedio} dias`}
                 delta="−0.8 dias"
                 icon={<TrendingUp className="h-5 w-5" />}
-                tone="success"
+                tone="primary"
               />
             </div>
+
 
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="p-5 border-0 shadow-card lg:col-span-1">
@@ -314,14 +322,14 @@ export function AdminPage() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 text-accent" /> Mapa Inteligente
+                    <MapPin className="h-4 w-4 text-accent" /> Mapa Inteligente — Recife
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Cluster e heatmap de incidências urbanas
+                    Coordenadas reais (OpenStreetMap) · clusters, heatmap e popups
                   </p>
                 </div>
               </div>
-              <MockMap height={420} items={filtered} />
+              <AdminRealMap height={460} items={filtered} onSelect={setSelected} />
             </Card>
           </>
         )}
@@ -335,6 +343,12 @@ export function AdminPage() {
           </Card>
         )}
       </div>
+
+      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          {selected && <AdminDenunciaDetail d={selected} />}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
