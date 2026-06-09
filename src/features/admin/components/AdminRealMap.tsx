@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
+import L, { type Map as LMap, type Marker as LMarker, type LayerGroup } from "leaflet";
 import type { Denuncia } from "@/types/denuncia";
 import { Button } from "@/components/ui/button";
 import { Layers, MapPin, Flame } from "lucide-react";
