@@ -7,14 +7,16 @@ import {
 } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { CheckCircle2, Circle, Sparkles, ShieldAlert, MapPin, ImageIcon } from "lucide-react";
-import { urgenciaColorClasses } from "@/lib/urgencia";
-import { DenunciaDetailMap } from "@/features/cidadao/components/DenunciaDetailMap";
+import { CheckCircle2, Circle, MapPin, ImageIcon } from "lucide-react";
 
 export function DetalhesDenuncia({ d }: { d: Denuncia }) {
-  const u = urgenciaColorClasses(d.iaUrgencia);
   const [zoom, setZoom] = useState<string | null>(null);
   const midias = d.midias ?? [];
+
+  const dataAbertura = d.data
+    ? new Date(d.data).toLocaleDateString("pt-BR")
+    : "—";
+
   return (
     <>
       <SheetHeader>
@@ -28,126 +30,124 @@ export function DetalhesDenuncia({ d }: { d: Denuncia }) {
         <SheetDescription>{d.descricao}</SheetDescription>
       </SheetHeader>
 
-      {d.iaUrgencia && (
-        <div className={`mt-4 rounded-lg border ${u.border} ${u.bg} p-3`}>
-          <div className="flex items-center gap-2">
-            <ShieldAlert className={`h-4 w-4 ${u.text}`} />
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">
-              Classificação de urgência
+      <div className="mt-5 space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2">
+            Informações da denúncia
+          </h4>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="text-xs text-muted-foreground">Categoria</div>
+              <div className="font-medium">{d.categoria}</div>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="text-xs text-muted-foreground">Data de abertura</div>
+              <div className="font-medium">{dataAbertura}</div>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3 col-span-2">
+              <div className="text-xs text-muted-foreground">Status</div>
+              <div className="font-medium">{d.status}</div>
             </div>
           </div>
-          <div className="mt-1 flex items-center gap-2">
-            <span className={`h-2 w-2 rounded-full ${u.dot}`} />
-            <span className="font-semibold text-foreground">{u.label}</span>
-            <span className="ml-auto text-xs text-muted-foreground">
-              {d.iaConfianca}% confiança
-            </span>
-          </div>
-          {d.iaUrgenciaMotivo && (
-            <p className="mt-2 text-xs text-foreground/80">{d.iaUrgenciaMotivo}</p>
-          )}
         </div>
-      )}
 
-      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <div className="text-xs text-muted-foreground">Categoria</div>
-          <div className="font-medium">{d.categoria}</div>
-        </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <div className="text-xs text-muted-foreground">Bairro</div>
-          <div className="font-medium">{d.bairro}</div>
-        </div>
-        {d.endereco && (
-          <div className="rounded-lg border bg-muted/30 p-3 col-span-2">
-            <div className="text-xs text-muted-foreground">Endereço</div>
-            <div className="font-medium text-sm">{d.endereco}</div>
-          </div>
-        )}
-        <div className="rounded-lg border bg-muted/30 p-3 col-span-2">
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> Sugestão da IA
-          </div>
-          <div className="font-medium">
-            {d.iaSugestao} — {d.iaConfianca}% confiança
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
-          <MapPin className="h-4 w-4 text-primary" /> Localização
-        </h4>
-        <DenunciaDetailMap lat={d.lat} lng={d.lng} titulo={d.titulo} height={200} />
-        <div className="mt-1 text-xs text-muted-foreground">
-          {d.bairro} • {d.lat.toFixed(5)}, {d.lng.toFixed(5)}
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
-          <ImageIcon className="h-4 w-4 text-primary" /> Fotos e evidências
-          <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
-            {midias.length}
-          </span>
-        </h4>
-        {midias.length === 0 ? (
-          <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-            Nenhuma evidência anexada a esta denúncia.
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {midias.map((m, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setZoom(m.url)}
-                className="group relative aspect-square overflow-hidden rounded-lg border bg-muted hover:ring-2 hover:ring-accent transition"
-                title={m.nome ?? "Evidência"}
-              >
-                <img
-                  src={m.url}
-                  alt={m.nome ?? `Evidência ${i + 1}`}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
-        <DialogContent className="max-w-3xl p-2 bg-background">
-          {zoom && (
-            <img src={zoom} alt="Evidência ampliada" className="w-full h-auto rounded-md" />
-          )}
-        </DialogContent>
-      </Dialog>
-
-
-      <div className="mt-6">
-        <h4 className="text-sm font-semibold text-foreground mb-3">Linha do tempo</h4>
-        <ol className="relative space-y-4 border-l-2 border-border pl-5">
-          {d.timeline.map((t, i) => (
-            <li key={i} className="relative">
-              <span
-                className={`absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full ${t.done ? "bg-success text-success-foreground" : "bg-muted border"}`}
-              >
-                {t.done ? (
-                  <CheckCircle2 className="h-3 w-3" />
-                ) : (
-                  <Circle className="h-3 w-3 text-muted-foreground" />
-                )}
-              </span>
-              <div className="text-sm font-medium text-foreground">{t.label}</div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(t.date).toLocaleString("pt-BR")}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <MapPin className="h-4 w-4 text-primary" /> Localização
+          </h4>
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+            <div className="space-y-2">
+              <div>
+                <div className="text-xs text-muted-foreground">Rua, número</div>
+                <div className="font-medium">{d.endereco || "(não informado)"}</div>
               </div>
-            </li>
-          ))}
-        </ol>
+              <div>
+                <div className="text-xs text-muted-foreground">Bairro</div>
+                <div className="font-medium">{d.bairro || "(não informado)"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Cidade</div>
+                <div className="font-medium">{d.cidade || "(não informado)"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">CEP</div>
+                <div className="font-medium">{d.cep || "(não informado)"}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+            <ImageIcon className="h-4 w-4 text-primary" /> Evidências
+            <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+              {midias.length}
+            </span>
+          </h4>
+          {midias.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              📷 Nenhuma evidência foi enviada para esta denúncia.
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {midias.map((m, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setZoom(m.url)}
+                  className="group relative aspect-square overflow-hidden rounded-lg border bg-muted hover:ring-2 hover:ring-accent transition"
+                  title={m.nome ?? "Evidência"}
+                >
+                  <img
+                    src={m.url}
+                    alt={m.nome ?? `Evidência ${i + 1}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
+          <DialogContent className="max-w-3xl p-2 bg-background">
+            {zoom && (
+              <img
+                src={zoom}
+                alt="Evidência ampliada"
+                className="w-full h-auto rounded-md"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-3">
+            Linha do tempo
+          </h4>
+          <ol className="relative space-y-4 border-l-2 border-border pl-5">
+            {d.timeline.map((t, i) => (
+              <li key={i} className="relative">
+                <span
+                  className={`absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full ${t.done ? "bg-success text-success-foreground" : "bg-muted border"}`}
+                >
+                  {t.done ? (
+                    <CheckCircle2 className="h-3 w-3" />
+                  ) : (
+                    <Circle className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </span>
+                <div className="text-sm font-medium text-foreground">{t.label}</div>
+                <div className="text-xs text-muted-foreground">
+                  {new Date(t.date).toLocaleString("pt-BR")}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </>
   );
 }
+

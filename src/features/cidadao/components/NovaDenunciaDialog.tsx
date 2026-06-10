@@ -32,13 +32,25 @@ export function NovaDenunciaDialog({
   onCreate: (d: Denuncia) => void;
 }) {
   const [step, setStep] = useState<StepKey>("categoria");
+  const [analysisToken, setAnalysisToken] = useState(0);
+
   const [categoria, setCategoria] = useState<Category | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [media, setMedia] = useState<File[]>([]);
   const [localizacao, setLocalizacao] = useState<LocalizacaoCompleta | null>(null);
 
+  const resetState = () => {
+    setStep("categoria");
+    setCategoria(null);
+    setTitulo("");
+    setDescricao("");
+    setMedia([]);
+    setLocalizacao(null);
+  };
+
   const stepIdx = STEPS.findIndex((s) => s.key === step);
+
   const goTo = (k: StepKey) => setStep(k);
   const next = () => {
     const n = STEPS[stepIdx + 1];
@@ -67,37 +79,56 @@ export function NovaDenunciaDialog({
   }, [step, categoria, titulo, localizacao]);
 
   const handleAnalysisDone = (r: { urgencia: Urgencia; motivo: string; confianca: number }) => {
+    // fluxo novo deve produzir uma denúncia limpa para o cidadão
+
+
+
+
     const lat = localizacao?.lat ?? -8.05;
+
     const lng = localizacao?.lng ?? -34.9;
     const d: Denuncia = {
-      id: `new-${Date.now()}`,
-      protocolo: `REC-${Date.now().toString().slice(-7)}`,
-      titulo,
-      descricao,
-      categoria: categoria!,
-      status: "Pendente",
-      bairro: localizacao?.bairro || "Boa Viagem",
-      data: new Date().toISOString(),
-      lat,
-      lng,
-      iaConfianca: r.confianca,
-      iaSugestao: categoria!,
-      iaUrgencia: r.urgencia,
-      iaUrgenciaMotivo: r.motivo,
-      endereco: localizacao?.enderecoCompleto,
-      cidade: localizacao?.cidade,
-      estado: localizacao?.estado,
-      cep: localizacao?.cep,
-      cidadao: "voce@recife.gov",
-      timeline: [
-        { label: "Recebido", date: new Date().toISOString(), done: true },
-        { label: "Analisado por IA", date: new Date().toISOString(), done: true },
-        { label: "Encaminhado ao órgão", date: new Date().toISOString(), done: false },
-        { label: "Em andamento", date: new Date().toISOString(), done: false },
-      ],
-    };
+  id: `new-${Date.now()}`,
+  protocolo: `REC-${Date.now().toString().slice(-7)}`,
+  titulo,
+  descricao,
+  categoria: categoria!,
+  status: "Pendente",
+  bairro: localizacao?.bairro || "Boa Viagem",
+  data: new Date().toISOString(),
+  lat,
+  lng,
+
+  midias: media.map((file) => ({
+    nome: file.name,
+    url: URL.createObjectURL(file),
+  })),
+
+  iaConfianca: r.confianca,
+  iaSugestao: categoria!,
+  iaUrgencia: r.urgencia,
+  iaUrgenciaMotivo: r.motivo,
+
+  endereco: localizacao?.enderecoCompleto,
+  cidade: localizacao?.cidade,
+  estado: localizacao?.estado,
+  cep: localizacao?.cep,
+
+  cidadao: "voce@recife.gov",
+
+  timeline: [
+    { label: "Recebido", date: new Date().toISOString(), done: true },
+    { label: "Analisado por IA", date: new Date().toISOString(), done: true },
+    { label: "Encaminhado ao órgão", date: new Date().toISOString(), done: false },
+    { label: "Em andamento", date: new Date().toISOString(), done: false },
+  ],
+};
     onCreate(d);
-    toast.success(`Denúncia ${d.protocolo} registrada • Urgência ${r.urgencia}`);
+    toast.success(`✅ Denúncia registrada com sucesso`);
+
+    resetState();
+    setAnalysisToken((v) => v + 1);
+
     onClose();
   };
 
@@ -268,9 +299,16 @@ export function NovaDenunciaDialog({
 
       {step !== "envio" && (
         <div className="mt-6 flex items-center justify-between gap-2 border-t pt-4">
-          <Button variant="ghost" onClick={onClose}>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              resetState();
+              onClose();
+            }}
+          >
             Cancelar
           </Button>
+
           <div className="flex gap-2">
             {stepIdx > 0 && (
               <Button variant="outline" onClick={prev}>

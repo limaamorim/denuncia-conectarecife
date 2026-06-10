@@ -42,6 +42,10 @@ export function MockMap({
             <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.5" />
             <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
           </radialGradient>
+
+          <filter id="pinShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0.6" stdDeviation="0.7" floodColor="#000" floodOpacity="0.25" />
+          </filter>
         </defs>
         <rect width="100" height="100" fill="url(#grid)" />
         <path
@@ -61,15 +65,22 @@ export function MockMap({
         <circle cx="30" cy="40" r="22" fill="url(#heat)" />
         <circle cx="70" cy="65" r="18" fill="url(#heat)" />
         <circle cx="55" cy="25" r="14" fill="url(#heat)" />
+
         {pts.map((p) => (
-          <g key={p.id}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r="1.6"
+          <g
+            key={p.id}
+            transform={`translate(${p.x} ${p.y})`}
+            className="cursor-pointer"
+          >
+            <title>Ocorrência (#{p.id})</title>
+
+            {/* Pin só vermelho no local */}
+            <path
+              d="M 0 -4 C 2.6 -4 4.7 -1.9 4.7 0.5 C 4.7 2.9 2.1 5.9 0 7.9 C -2.1 5.9 -4.7 2.9 -4.7 0.5 C -4.7 -1.9 -2.6 -4 0 -4 Z"
               fill={MARKER_COLOR}
               stroke="#fff"
-              strokeWidth="0.3"
+              strokeWidth="0.5"
+              filter="url(#pinShadow)"
             />
           </g>
         ))}
